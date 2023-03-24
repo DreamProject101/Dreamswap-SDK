@@ -1,7 +1,6 @@
 var $schema = "http://json-schema.org/draft-07/schema#";
-var $id = "https://Dreamswap.org/tokenlist.schema.json";
-var title = "Dreamswap Token List";
-var description = "Schema for lists of tokens compatible with the Dreamswap Interface";
+var title = "DreamSwap Token List";
+var description = "Schema for lists of tokens compatible with the DreamSwap Interface";
 var definitions = {
 	Version: {
 		type: "object",
@@ -64,7 +63,7 @@ var definitions = {
 		type: "string",
 		description: "The name of a token extension property",
 		minLength: 1,
-		maxLength: 40,
+		maxLength: 30,
 		pattern: "^[\\w]+$",
 		examples: [
 			"color",
@@ -72,32 +71,7 @@ var definitions = {
 			"aliases"
 		]
 	},
-	ExtensionMap: {
-		type: "object",
-		description: "An object containing any arbitrary or vendor-specific token metadata",
-		maxProperties: 10,
-		propertyNames: {
-			$ref: "#/definitions/ExtensionIdentifier"
-		},
-		additionalProperties: {
-			$ref: "#/definitions/ExtensionValue"
-		},
-		examples: [
-			{
-				color: "#000000",
-				is_verified_by_me: true
-			},
-			{
-				"x-bridged-addresses-by-chain": {
-					"1": {
-						bridgeAddress: "0x4200000000000000000000000000000000000010",
-						tokenAddress: "0x4200000000000000000000000000000000000010"
-					}
-				}
-			}
-		]
-	},
-	ExtensionPrimitiveValue: {
+	ExtensionValue: {
 		anyOf: [
 			{
 				type: "string",
@@ -124,47 +98,6 @@ var definitions = {
 			}
 		]
 	},
-	ExtensionValue: {
-		anyOf: [
-			{
-				$ref: "#/definitions/ExtensionPrimitiveValue"
-			},
-			{
-				type: "object",
-				maxProperties: 10,
-				propertyNames: {
-					$ref: "#/definitions/ExtensionIdentifier"
-				},
-				additionalProperties: {
-					$ref: "#/definitions/ExtensionValueInner0"
-				}
-			}
-		]
-	},
-	ExtensionValueInner0: {
-		anyOf: [
-			{
-				$ref: "#/definitions/ExtensionPrimitiveValue"
-			},
-			{
-				type: "object",
-				maxProperties: 10,
-				propertyNames: {
-					$ref: "#/definitions/ExtensionIdentifier"
-				},
-				additionalProperties: {
-					$ref: "#/definitions/ExtensionValueInner1"
-				}
-			}
-		]
-	},
-	ExtensionValueInner1: {
-		anyOf: [
-			{
-				$ref: "#/definitions/ExtensionPrimitiveValue"
-			}
-		]
-	},
 	TagDefinition: {
 		type: "object",
 		description: "Definition of a tag that can be associated with a token via its identifier",
@@ -180,7 +113,7 @@ var definitions = {
 			description: {
 				type: "string",
 				description: "A user-friendly description of the tag",
-				pattern: "^[ \\w\\.,:]+$",
+				pattern: "^[ \\w\\.,]+$",
 				minLength: 1,
 				maxLength: 200
 			}
@@ -230,33 +163,19 @@ var definitions = {
 			name: {
 				type: "string",
 				description: "The name of the token",
-				minLength: 0,
+				minLength: 1,
 				maxLength: 40,
-				anyOf: [
-					{
-						"const": ""
-					},
-					{
-						pattern: "^[ \\S+]+$"
-					}
-				],
+				pattern: "^[ \\w.'+\\-%/À-ÖØ-öø-ÿ\\:]+$",
 				examples: [
 					"USD Coin"
 				]
 			},
 			symbol: {
 				type: "string",
-				description: "The symbol for the token",
-				minLength: 0,
+				description: "The symbol for the token; must be alphanumeric",
+				pattern: "^[a-zA-Z0-9+\\-%/\\$]+$",
+				minLength: 1,
 				maxLength: 20,
-				anyOf: [
-					{
-						"const": ""
-					},
-					{
-						pattern: "^\\S+$"
-					}
-				],
 				examples: [
 					"USDC"
 				]
@@ -275,14 +194,28 @@ var definitions = {
 				items: {
 					$ref: "#/definitions/TagIdentifier"
 				},
-				maxItems: 10,
+				maxLength: 10,
 				examples: [
 					"stablecoin",
 					"compound"
 				]
 			},
 			extensions: {
-				$ref: "#/definitions/ExtensionMap"
+				type: "object",
+				description: "An object containing any arbitrary or vendor-specific token metadata",
+				propertyNames: {
+					$ref: "#/definitions/ExtensionIdentifier"
+				},
+				additionalProperties: {
+					$ref: "#/definitions/ExtensionValue"
+				},
+				maxProperties: 10,
+				examples: [
+					{
+						color: "#000000",
+						is_verified_by_me: true
+					}
+				]
 			}
 		},
 		required: [
@@ -301,7 +234,7 @@ var properties = {
 		type: "string",
 		description: "The name of the token list",
 		minLength: 1,
-		maxLength: 30,
+		maxLength: 20,
 		pattern: "^[\\w ]+$",
 		examples: [
 			"My Token List"
@@ -378,7 +311,6 @@ var required = [
 ];
 var tokenlist_schema = {
 	$schema: $schema,
-	$id: $id,
 	title: title,
 	description: description,
 	definitions: definitions,
@@ -415,13 +347,11 @@ function versionComparator(versionA, versionB) {
 /**
  * Returns true if versionB is an update over versionA
  */
-
 function isVersionUpdate(base, update) {
   return versionComparator(base, update) < 0;
 }
 
 var VersionUpgrade;
-
 (function (VersionUpgrade) {
   VersionUpgrade[VersionUpgrade["NONE"] = 0] = "NONE";
   VersionUpgrade[VersionUpgrade["PATCH"] = 1] = "PATCH";
@@ -434,25 +364,19 @@ var VersionUpgrade;
  * @param base base list
  * @param update update to the list
  */
-
-
 function getVersionUpgrade(base, update) {
   if (update.major > base.major) {
     return VersionUpgrade.MAJOR;
   }
-
   if (update.major < base.major) {
     return VersionUpgrade.NONE;
   }
-
   if (update.minor > base.minor) {
     return VersionUpgrade.MINOR;
   }
-
   if (update.minor < base.minor) {
     return VersionUpgrade.NONE;
   }
-
   return update.patch > base.patch ? VersionUpgrade.PATCH : VersionUpgrade.NONE;
 }
 
@@ -465,13 +389,11 @@ function getVersionUpgrade(base, update) {
 function compareTokenInfoProperty(a, b) {
   if (a === b) return true;
   if (typeof a !== typeof b) return false;
-
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.every(function (el, i) {
       return b[i] === el;
     });
   }
-
   return false;
 }
 /**
@@ -479,8 +401,6 @@ function compareTokenInfoProperty(a, b) {
  * @param base base list
  * @param update updated list
  */
-
-
 function diffTokenLists(base, update) {
   var indexedBase = base.reduce(function (memo, tokenInfo) {
     if (!memo[tokenInfo.chainId]) memo[tokenInfo.chainId] = {};
@@ -489,9 +409,7 @@ function diffTokenLists(base, update) {
   }, {});
   var newListUpdates = update.reduce(function (memo, tokenInfo) {
     var _indexedBase$tokenInf;
-
     var baseToken = (_indexedBase$tokenInf = indexedBase[tokenInfo.chainId]) == null ? void 0 : _indexedBase$tokenInf[tokenInfo.address];
-
     if (!baseToken) {
       memo.added.push(tokenInfo);
     } else {
@@ -500,24 +418,19 @@ function diffTokenLists(base, update) {
       }).filter(function (s) {
         return !compareTokenInfoProperty(tokenInfo[s], baseToken[s]);
       });
-
       if (changes.length > 0) {
         if (!memo.changed[tokenInfo.chainId]) {
           memo.changed[tokenInfo.chainId] = {};
         }
-
         memo.changed[tokenInfo.chainId][tokenInfo.address] = changes;
       }
     }
-
     if (!memo.index[tokenInfo.chainId]) {
       var _memo$index$tokenInfo;
-
       memo.index[tokenInfo.chainId] = (_memo$index$tokenInfo = {}, _memo$index$tokenInfo[tokenInfo.address] = true, _memo$index$tokenInfo);
     } else {
       memo.index[tokenInfo.chainId][tokenInfo.address] = true;
     }
-
     return memo;
   }, {
     added: [],
@@ -528,7 +441,6 @@ function diffTokenLists(base, update) {
     if (!newListUpdates.index[curr.chainId] || !newListUpdates.index[curr.chainId][curr.address]) {
       list.push(curr);
     }
-
     return list;
   }, []);
   return {
@@ -543,7 +455,6 @@ function diffTokenLists(base, update) {
  * @param baseList the base list of tokens
  * @param updatedList the updated list of tokens
  */
-
 function minVersionBump(baseList, updatedList) {
   var diff = diffTokenLists(baseList, updatedList);
   if (diff.removed.length > 0) return VersionUpgrade.MAJOR;
@@ -557,26 +468,22 @@ function minVersionBump(baseList, updatedList) {
  * @param base current version
  * @param bump the upgrade type
  */
-
 function nextVersion(base, bump) {
   switch (bump) {
     case VersionUpgrade.NONE:
       return base;
-
     case VersionUpgrade.MAJOR:
       return {
         major: base.major + 1,
         minor: 0,
         patch: 0
       };
-
     case VersionUpgrade.MINOR:
       return {
         major: base.major,
         minor: base.minor + 1,
         patch: 0
       };
-
     case VersionUpgrade.PATCH:
       return {
         major: base.major,

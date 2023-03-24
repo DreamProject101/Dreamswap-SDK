@@ -1,0 +1,42 @@
+{
+  "name": "@dreamswap/token-lists",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "📚 The Token Lists specification",
+  "main": "",
+  "typings": "",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "repository": {
+    "url": "https://github.com/DreamProject101/Dreamswap-SDK/tree/master/token-lists",
+    "type": "git"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "postbuild": "cp src/tokenlist.schema.json dist/tokenlist.schema.json",
+    "prepublishOnly": "tsdx build"
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "module": "dist/token-lists.esm.js",
+  "devDependencies": {
+    "ajv": "^6.12.2",
+    "tsdx": "^0.14.0",
+    "tslib": "^2.0.0",
+    "typescript": "^3.9.5"
+  },
+  "keywords": [
+    "dreamswap",
+    "ethereum"
+  ]
+}
